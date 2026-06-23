@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konjyosom Tech Solutions Pvt. Ltd. | Web Design & Security Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .logo-img { height: 40px; width: auto; max-width: 150px; object-fit: contain; margin-right: 10px; }
+        .profile-photo { width: 200px; height: 200px; border-radius: 20px; object-fit: cover; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .card-avatar-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid rgba(255,255,255,0.3); }
+        .portfolio-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .portfolio-item:hover .portfolio-img { transform: scale(1.1); }
+        .portfolio-icon-fallback { font-size: 3rem; color: var(--primary); }
+        .hero-social-links { display: flex; gap: 15px; margin-top: 25px; }
+        .hero-social-links a { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+        .hero-social-links a:hover { background: var(--primary); border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        .social-links a { transition: all 0.3s ease; }
+        .social-links a:hover { transform: translateY(-3px); background: var(--primary); }
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <img src="assets/logo.png" alt="Konjyosom Tech Solutions Pvt. Ltd. Logo" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="logo-icon" style="display:none;"><i class="fas fa-bolt"></i></div>
+                <span>Konjyosom</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="booking.html">Book Installation</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <a href="booking-tracker.html" class="nav-cta">Booking Tracker</a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-close" id="mobileClose"><i class="fas fa-times"></i></button>
+        <ul>
+            <li><a href="#home" class="mobile-link">Home</a></li>
+            <li><a href="#about" class="mobile-link">About</a></li>
+            <li><a href="#services" class="mobile-link">Services</a></li>
+            <li><a href="booking.html" class="mobile-link">Book Installation</a></li>
+            <li><a href="#portfolio" class="mobile-link">Portfolio</a></li>
+            <li><a href="#contact" class="mobile-link">Contact</a></li>
+        </ul>
+    </div>
+
+    <section class="hero" id="home">
+        <div class="hero-bg-grid"></div>
+        <div class="hero-glow"></div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="animate-fadeInUp">
+                    Designing Digital<br>
+                    <span class="gradient-text">Experiences</span> &<br>
+                    Securing Spaces
+                </h1>
+                <p class="hero-subtitle animate-fadeInUp delay-1">
+                    We are Konjyosom Tech Team — Web Designers, Developers, and Security Experts at Konjyosom Tech Solutions Pvt. Ltd.. 
+                    We craft stunning websites and build robust security systems.
+                </p>
+                <div class="hero-badges animate-fadeInUp delay-2">
+                    <div class="badge"><i class="fas fa-code"></i> Web Design</div>
+                    <div class="badge"><i class="fas fa-shield-alt"></i> Security</div>
+                    <div class="badge"><i class="fas fa-globe"></i> Nepal</div>
+                </div>
+                <div class="hero-buttons animate-fadeInUp delay-3">
+                    <a href="#portfolio" class="btn btn-primary"><i class="fas fa-eye"></i> View Our Work</a>
+                    <a href="#contact" class="btn btn-secondary"><i class="fas fa-paper-plane"></i> Get Security Quote</a>
+                </div>
+                <div class="hero-social-links animate-fadeInUp delay-4">
+                    <a href="https://facebook.com/konjyosomtech" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://instagram.com/konjyosomtech" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://linkedin.com/company/konjyosom-tech-solutions" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://wa.me/9779865057546" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div class="hero-visual animate-slideInRight delay-2">
+                <div class="hero-card">
+                    <div class="card-header">
+                        <img src="assets/team-photo.jpg" alt="Konjyosom Tech Team" class="card-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="card-avatar" style="display:none;">KT</div>
+                        <div class="card-info">
+                            <h3>Konjyosom Tech Team</h3>
+                            <p>Tech Solutions Team</p>
+                        </div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">Websites Built</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">30+</div>
+                            <div class="stat-label">Security Projects</div>
+                        </div>
+                    </div>
+                    <div class="card-services">
+                        <div class="service-tag"><i class="fas fa-laptop-code"></i> Website Design & Development</div>
+                        <div class="service-tag"><i class="fas fa-video"></i> CCTV Installation</div>
+                        <div class="service-tag"><i class="fas fa-door-open"></i> Access Control Systems</div>
+                        <div class="service-tag"><i class="fas fa-gate"></i> E-Gate Solutions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">About Us</span>
+                <h2 class="section-title">Two Passions, One Mission</h2>
+                <p class="section-subtitle">Bridging creativity and security to deliver excellence in every project.</p>
+            </div>
+            <div class="about-grid">
+                <div class="about-image animate-slideInLeft">
+                    <div class="about-image-main">
+                        <img src="assets/team-photo.jpg" alt="Konjyosom Tech Team" class="profile-photo" onerror="this.style.display='none'; this.parentElement.querySelector('.icon-large').style.display='flex';">
+                        <div class="icon-large" style="display:none;"><i class="fas fa-user-tie"></i></div>
+                        <h3>Konjyosom Tech Team</h3>
+                        <p>Web Design & Security Experts</p>
+                    </div>
+                    <div class="floating-card floating-card-1">
+                        <i class="fas fa-award"></i>
+                        <h4>5+ Years</h4>
+                        <span>Experience</span>
+                    </div>
+                    <div class="floating-card floating-card-2">
+                        <i class="fas fa-users"></i>
+                        <h4>80+ Clients</h4>
+                        <span>Satisfied</span>
+                    </div>
+                </div>
+                <div class="about-content animate-slideInRight">
+                    <h2>Crafting Digital & Physical Security Solutions</h2>
+                    <p>
+                        With over 5 years of experience, we have built a unique career that spans both the digital and physical worlds. 
+                        As web designers, we create modern, responsive websites that help businesses establish a powerful online presence. 
+                        As the team at Konjyosom Tech Solutions Pvt. Ltd., we protect businesses with cutting-edge security technology.
+                    </p>
+                    <p>
+                        Whether you need a stunning website to grow your brand or a comprehensive security system to protect your assets, 
+                        we bring the same level of dedication, precision, and innovation to every project.
+                    </p>
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <div><h4>Modern Design</h4><p>Latest trends & technologies</p></div>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <div><h4>Reliable Security</h4><p>Top-tier equipment & service</p></div>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <div><h4>Fast Delivery</h4><p>On-time project completion</p></div>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <div><h4>24/7 Support</h4><p>Always here to help you</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="services-section" id="services">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">What We Offer</span>
+                <h2 class="section-title">Dual Expertise Services</h2>
+                <p class="section-subtitle">From pixel-perfect websites to iron-clad security systems — we have got you covered.</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-category animate-fadeInUp">
+                    <div class="service-category-header">
+                        <div class="service-icon web"><i class="fas fa-laptop-code"></i></div>
+                        <div><h3>Web Design & Development</h3><span>Creative Digital Solutions</span></div>
+                    </div>
+                    <div class="service-list">
+                        <div class="service-item"><i class="fas fa-paint-brush"></i><div><h4>Custom Website Design</h4><p>Unique, modern designs tailored to your brand</p></div></div>
+                        <div class="service-item"><i class="fas fa-mobile-alt"></i><div><h4>Responsive Development</h4><p>Perfect on every device and screen size</p></div></div>
+                        <div class="service-item"><i class="fas fa-shopping-cart"></i><div><h4>E-Commerce Solutions</h4><p>Online stores that convert visitors to customers</p></div></div>
+                        <div class="service-item"><i class="fas fa-search"></i><div><h4>SEO Optimization</h4><p>Rank higher and get found by your audience</p></div></div>
+                        <div class="service-item"><i class="fas fa-tools"></i><div><h4>Website Maintenance</h4><p>Keep your site secure, fast, and up-to-date</p></div></div>
+                    </div>
+                </div>
+                <div class="service-category animate-fadeInUp delay-2">
+                    <div class="service-category-header">
+                        <div class="service-icon security"><i class="fas fa-shield-alt"></i></div>
+                        <div><h3>Konjyosom Security Solutions</h3><span>Physical Security Systems</span></div>
+                    </div>
+                    <div class="service-list">
+                        <div class="service-item"><i class="fas fa-video"></i><div><h4>CCTV Installation</h4><p>HD cameras with remote monitoring capabilities</p></div></div>
+                        <div class="service-item"><i class="fas fa-fingerprint"></i><div><h4>Access Control Systems</h4><p>Biometric, card, and keypad entry solutions</p></div></div>
+                        <div class="service-item"><i class="fas fa-gate"></i><div><h4>E-Gate / Automatic Gates</h4><p>Smart gate automation for homes and businesses</p></div></div>
+                        <div class="service-item"><i class="fas fa-bell"></i><div><h4>Alarm Systems</h4><p>Intrusion detection with instant alerts</p></div></div>
+                        <div class="service-item"><i class="fas fa-clipboard-check"></i><div><h4>Security Consultation</h4><p>Custom security assessment and planning</p></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="portfolio">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Portfolio</span>
+                <h2 class="section-title">Featured Projects</h2>
+                <p class="section-subtitle">A selection of our best work across web design and security installations.</p>
+            </div>
+            <div class="portfolio-filter">
+                <button class="filter-btn active" data-filter="all">All Projects</button>
+                <button class="filter-btn" data-filter="web">Web Design</button>
+                <button class="filter-btn" data-filter="security">Security</button>
+            </div>
+            <div class="portfolio-grid" id="portfolioGrid">
+                <div class="portfolio-item" data-category="web">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-ecommerce.jpg" alt="E-Commerce Platform" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Web Design</span>
+                        <h3>E-Commerce Platform</h3>
+                        <p>Full-stack online store with payment integration</p>
+                    </div>
+                </div>
+                <div class="portfolio-item" data-category="web">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-corporate.jpg" alt="Corporate Website" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-building"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Web Design</span>
+                        <h3>Corporate Website</h3>
+                        <p>Modern business site with CMS integration</p>
+                    </div>
+                </div>
+                <div class="portfolio-item" data-category="web">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-restaurant.jpg" alt="Restaurant Booking System" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-utensils"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Web Design</span>
+                        <h3>Restaurant Booking</h3>
+                        <p>Reservation system with menu management</p>
+                    </div>
+                </div>
+                <div class="portfolio-item" data-category="security">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-cctv.jpg" alt="Office CCTV Setup" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-video"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag security-tag">Security</span>
+                        <h3>Office CCTV Setup</h3>
+                        <p>16-camera HD system with cloud storage</p>
+                    </div>
+                </div>
+                <div class="portfolio-item" data-category="security">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-warehouse.jpg" alt="Warehouse Security" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-warehouse"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag security-tag">Security</span>
+                        <h3>Warehouse Security</h3>
+                        <p>Full access control + CCTV + alarm system</p>
+                    </div>
+                </div>
+                <div class="portfolio-item" data-category="security">
+                    <div class="portfolio-image">
+                        <img src="assets/portfolio-egate.jpg" alt="Smart Home E-Gate" class="portfolio-img" onerror="this.style.display='none'; this.parentElement.querySelector('.portfolio-icon-fallback').style.display='flex';">
+                        <div class="portfolio-icon-fallback" style="display:none;"><i class="fas fa-home"></i></div>
+                        <div class="portfolio-overlay"><span>View Project</span></div>
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag security-tag">Security</span>
+                        <h3>Smart Home Gate</h3>
+                        <p>Automatic E-Gate with remote access</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Get In Touch</span>
+                <h2 class="section-title">Let's Work Together</h2>
+                <p class="section-subtitle">Ready for a new website or security upgrade? Send us a message.</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-info animate-slideInLeft">
+                    <h2>Start Your Project Today</h2>
+                    <p>Whether you need a stunning website or a complete security overhaul, we are here to help. Reach out and let's discuss your requirements.</p>
+                    <div class="contact-methods">
+                        <div class="contact-method">
+                            <div class="contact-method-icon"><i class="fas fa-phone"></i></div>
+                            <div><h4>Phone / WhatsApp</h4><a href="tel:+977-9865057546">+977-9865057546</a></div>
+                        </div>
+                        <div class="contact-method">
+                            <div class="contact-method-icon"><i class="fas fa-envelope"></i></div>
+                            <div><h4>Email</h4><a href="mailto:abhijittamang69@gmail.com">abhijittamang69@gmail.com</a></div>
+                        </div>
+                        <div class="contact-method">
+                            <div class="contact-method-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div><h4>Office</h4><p>Konjyosom Tech Solutions Pvt. Ltd., Nepal</p></div>
+                        </div>
+                        <div class="contact-method">
+                            <div class="contact-method-icon"><i class="fas fa-clock"></i></div>
+                            <div><h4>Working Hours</h4><p>Sun - Fri: 9:00 AM - 6:00 PM</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form animate-slideInRight">
+                    <form id="contactForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Your Name *</label>
+                                <input type="text" id="contactName" placeholder="Your Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address *</label>
+                                <input type="email" id="contactEmail" placeholder="email@example.com" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="contactPhone" placeholder="98XXXXXXXX">
+                        </div>
+                        <div class="form-group">
+                            <label>Service Type</label>
+                            <select id="serviceSelect">
+                                <option value="">Select a service...</option>
+                                <option value="web">Website Design & Development</option>
+                                <option value="ecommerce">E-Commerce Website</option>
+                                <option value="cctv">CCTV Installation</option>
+                                <option value="access">Access Control System</option>
+                                <option value="egate">E-Gate / Automatic Gate</option>
+                                <option value="security-package">Complete Security Package</option>
+                                <option value="other">Other / Custom Request</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Project Details *</label>
+                            <textarea id="contactMessage" placeholder="Tell us about your project requirements..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Budget Range (Optional)</label>
+                            <select id="budgetSelect">
+                                <option value="">Select budget range...</option>
+                                <option value="small">Under NPR 50,000</option>
+                                <option value="medium">NPR 50,000 - 1,50,000</option>
+                                <option value="large">NPR 1,50,000 - 5,00,000</option>
+                                <option value="enterprise">Above NPR 5,00,000</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="submit-btn" id="contactSubmitBtn">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <img src="assets/logo.png" alt="Konjyosom Tech Solutions Pvt. Ltd. Logo" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-icon" style="display:none;"><i class="fas fa-bolt"></i></div>
+                    <span>Konjyosom</span>
+                </a>
+                <p>Konjyosom Tech Solutions Pvt. Ltd. — Your trusted partner for modern web design and professional security systems in Nepal.</p>
+                <div class="social-links">
+                    <a href="https://facebook.com/konjyosomtech" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://instagram.com/konjyosomtech" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://linkedin.com/company/konjyosom-tech-solutions" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://wa.me/9779865057546" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Web Services</h4>
+                <ul>
+                    <li><a href="#services">Website Design</a></li>
+                    <li><a href="#services">Web Development</a></li>
+                    <li><a href="#services">E-Commerce</a></li>
+                    <li><a href="#services">SEO Services</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Security Services</h4>
+                <ul>
+                    <li><a href="#services">CCTV Systems</a></li>
+                    <li><a href="#services">Access Control</a></li>
+                    <li><a href="#services">E-Gate Solutions</a></li>
+                    <li><a href="#services">Alarm Systems</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="booking.html">Book Installation</a></li>
+                    <li><a href="#portfolio">Portfolio</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Konjyosom Tech Solutions Pvt. Ltd.. All rights reserved.</p>
+            <p>Designed & Developed by Konjyosom Tech Team</p>
+        </div>
+    </footer>
+
+    <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+    <script src="script.js"></script>
+    <script>
+    const API_BASE = 'https://konjyosom-website-updated.onrender.com/api';
+
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('contactSubmitBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+
+        const data = {
+            name: document.getElementById('contactName').value.trim(),
+            email: document.getElementById('contactEmail').value.trim(),
+            phone: document.getElementById('contactPhone').value.trim(),
+            serviceType: document.getElementById('serviceSelect').value,
+            budgetRange: document.getElementById('budgetSelect').value,
+            message: document.getElementById('contactMessage').value.trim()
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/inquiries`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Server error ${res.status}: ${errorText}`);
+            }
+
+            const result = await res.json();
+            if (result.success) {
+                alert('Thank you! Your message has been sent. We will get back to you soon.');
+                this.reset();
+            } else {
+                alert('Error: ' + (result.message || 'Failed to send message'));
+            }
+        } catch (error) {
+            console.error('Contact error:', error);
+            alert('Network error: ' + error.message + '
+
+Please check your internet connection or try again later.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+    </script>
+</body>
+</html>
