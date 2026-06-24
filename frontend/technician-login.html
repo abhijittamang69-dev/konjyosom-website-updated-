@@ -172,10 +172,21 @@
     <script>
         const API_BASE = 'https://konjyosom-website-updated.onrender.com/api';
 
+        // Keep-alive ping to prevent Render cold start (free tier sleeps after 15 min inactivity)
+        async function pingServer() {
+            try {
+                await fetch(`${API_BASE}/health`, { method: 'HEAD', mode: 'no-cors' });
+            } catch(e) {}
+        }
+        pingServer();
+        setInterval(pingServer, 300000); // ping every 5 minutes
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
+
+            showLoader('Connecting to server...');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
             btn.disabled = true;
 
@@ -185,11 +196,20 @@
             };
 
             try {
+                // Abort controller with 15 second timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                 const res = await fetch(`${API_BASE}/auth/technician-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
                 const result = await res.json();
 
                 if (result.success) {
@@ -199,17 +219,44 @@
                     showNotification('Login successful! Redirecting...', 'success');
                     setTimeout(() => {
                         window.location.href = 'technician-dashboard.html';
-                    }, 1000);
+                    }, 800);
                 } else {
-                    showNotification(result.message || 'Login failed', 'error');
+                    showNotification(result.message || 'Invalid credentials', 'error');
                 }
             } catch (error) {
-                showNotification('Network error. Please try again.', 'error');
+                if (error.name === 'AbortError') {
+                    showNotification('Server is waking up. Please try again in 30 seconds.', 'error');
+                } else {
+                    showNotification('Network error. Please check your connection.', 'error');
+                }
             } finally {
+                hideLoader();
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         });
+
+        function showLoader(text) {
+            const existing = document.getElementById('pageLoader');
+            if (existing) existing.remove();
+            const loader = document.createElement('div');
+            loader.id = 'pageLoader';
+            loader.innerHTML = `
+                <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);z-index:99999;
+                            display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;">
+                    <div style="width:50px;height:50px;border:4px solid #e2e8f0;border-top-color:#0ea5e9;border-radius:50%;
+                                animation:spin 1s linear infinite;"></div>
+                    <p style="color:#64748b;font-weight:500;">${text}</p>
+                </div>
+                <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+            `;
+            document.body.appendChild(loader);
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('pageLoader');
+            if (loader) loader.remove();
+        }
 
         function showNotification(message, type) {
             const existing = document.querySelector('.notification');
