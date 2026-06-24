@@ -438,7 +438,7 @@
                         <td class="td-name">${b.name}</td>
                         <td class="td-service"><i class="fas fa-tools"></i> ${b.service}</td>
                         <td class="td-muted">${b.preferredDate || 'TBD'}</td>
-                        <td><span class="badge badge-${b.status}">${b.status}</span></td>
+                        <td>${renderStatusDropdown('booking', b.id, b.status)}</td>
                     </tr>`;
                 });
             } else {
@@ -461,7 +461,7 @@
                         <td class="td-service"><i class="fas fa-tools"></i> ${b.service}</td>
                         <td class="td-muted">${b.preferredDate || 'TBD'}<br>${b.time || ''}</td>
                         <td class="td-muted" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${b.address || 'N/A'}</td>
-                        <td><span class="badge badge-${b.status}">${b.status}</span></td>
+                        <td>${renderStatusDropdown('booking', b.id, b.status)}</td>
                         <td><button class="action-btn" onclick='viewBooking(${JSON.stringify(b).replace(/'/g, "&#39;")})' title="View Details"><i class="fas fa-eye"></i></button></td>
                     </tr>`;
                 });
@@ -484,7 +484,7 @@
                         <td class="td-muted">${e.phone || 'N/A'}<br>${e.email}</td>
                         <td>${e.serviceType || 'General'}</td>
                         <td>${e.subject || 'N/A'}</td>
-                        <td><span class="badge badge-${e.status === 'in-progress' ? 'inprogress' : e.status}">${e.status}</span></td>
+                        <td>${renderStatusDropdown('enquiry', e.id, e.status)}</td>
                         <td><button class="action-btn" onclick='viewEnquiry(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="View Details"><i class="fas fa-eye"></i></button></td>
                     </tr>`;
                 });
@@ -543,6 +543,50 @@
             window.location.href = 'technician-login.html';
         }
 
+
+        // Status selection functions - Technician can only mark as completed
+        function renderStatusDropdown(type, id, currentStatus) {
+            // Technician can only mark assigned work as completed
+            // Show button only if not already completed or cancelled
+            if (currentStatus === 'completed' || currentStatus === 'cancelled') {
+                return `<span class="badge badge-${currentStatus}">${currentStatus}</span>`;
+            }
+            return `<button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="markCompleted('${type}', '${id}')">
+                <i class="fas fa-check"></i> Mark Complete
+            </button>`;
+        }
+
+        async function markCompleted(type, id) {
+            if (!confirm('Mark this ' + (type === 'booking' ? 'booking' : 'enquiry') + ' as completed?')) return;
+            const url = type === 'booking' ? `/bookings/${id}` : `/inquiries/${id}`;
+            const res = await apiFetch(url, { 
+                method: 'PATCH', 
+                body: JSON.stringify({ status: 'completed' }) 
+            });
+            if (res && res.success) {
+                showNotification((type === 'booking' ? 'Booking' : 'Enquiry') + ' marked as completed', 'success');
+                if (type === 'booking') loadBookings(); else loadEnquiries();
+                loadDashboard();
+            } else {
+                showNotification('Failed to update status', 'error');
+            }
+        }
+
+        // Keep updateStatus for compatibility but technician shouldn't use it directly
+        async function updateStatus(type, id, newStatus) {
+            const url = type === 'booking' ? `/bookings/${id}` : `/inquiries/${id}`;
+            const res = await apiFetch(url, { 
+                method: 'PATCH', 
+                body: JSON.stringify({ status: newStatus }) 
+            });
+            if (res && res.success) {
+                showNotification(`${type === 'booking' ? 'Booking' : 'Enquiry'} status updated to ${newStatus}`, 'success');
+                if (type === 'booking') loadBookings(); else loadEnquiries();
+                loadDashboard();
+            } else {
+                showNotification('Failed to update status', 'error');
+            }
+        }
         // Initial load
         loadDashboard();
     </script>
