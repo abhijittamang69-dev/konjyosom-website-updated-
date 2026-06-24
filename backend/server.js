@@ -163,72 +163,110 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// MongoDB Connection
+// ===== IN-MEMORY FALLBACK (when MongoDB is down) =====
+let useMemoryDb = false;
+const memoryBookings = [];
+const memoryInquiries = [];
+const memoryTechnicians = [];
+
+// MongoDB Connection - DON'T EXIT ON FAILURE, USE FALLBACK
 const MONGODB_URI = process.env.MONGODB_URI;
+
 if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI environment variable is required');
-  process.exit(1);
+  console.error('⚠️ MONGODB_URI not set - running in MEMORY-ONLY mode');
+  useMemoryDb = true;
+} else {
+  mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 })
+    .then(() => console.log('✅ MongoDB connected'))
+    .catch(err => {
+      console.error('❌ MongoDB connection error:', err.message);
+      console.log('⚠️ Falling back to IN-MEMORY mode - data will be lost on restart');
+      useMemoryDb = true;
+    });
 }
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
+// ===== SCHEMAS (only if MongoDB connected) =====
+let Booking, Inquiry, Technician;
+
+if (!useMemoryDb) {
+  const bookingSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    reference: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    email: { type: String, default: '' },
+    address: { type: String, default: '' },
+    service: { type: String, required: true },
+    property: { type: String, default: '' },
+    preferredDate: { type: String, default: '' },
+    date: { type: String, default: '' },
+    time: { type: String, default: '' },
+    notes: { type: String, default: '' },
+    message: { type: String, default: '' },
+    status: { type: String, enum: ['pending', 'confirmed', 'completed', 'cancelled'], default: 'pending' },
+    assignedTechnician: { type: String, default: null },
+    technicianNotes: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now }
   });
 
-// ===== SCHEMAS =====
+  const inquirySchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    reference: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, default: '' },
+    subject: { type: String, default: '' },
+    serviceType: { type: String, default: 'General' },
+    budgetRange: { type: String, default: '' },
+    message: { type: String, required: true },
+    status: { type: String, enum: ['new', 'in-progress', 'resolved'], default: 'new' },
+    assignedTechnician: { type: String, default: null },
+    createdAt: { type: Date, default: Date.now }
+  });
 
-const bookingSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  reference: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  phone: { type: String, required: true },
-  email: { type: String, default: '' },
-  address: { type: String, default: '' },
-  service: { type: String, required: true },
-  property: { type: String, default: '' },
-  preferredDate: { type: String, default: '' },
-  date: { type: String, default: '' },
-  time: { type: String, default: '' },
-  notes: { type: String, default: '' },
-  message: { type: String, default: '' },
-  status: { type: String, enum: ['pending', 'confirmed', 'completed', 'cancelled'], default: 'pending' },
-  assignedTechnician: { type: String, default: null },
-  technicianNotes: { type: String, default: '' },
-  createdAt: { type: Date, default: Date.now }
-});
+  const technicianSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    phone: { type: String, default: '' },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['technician', 'admin'], default: 'technician' },
+    specialization: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    createdAt: { type: Date, default: Date.now }
+  });
 
-const inquirySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  reference: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, default: '' },
-  subject: { type: String, default: '' },
-  serviceType: { type: String, default: 'General' },
-  budgetRange: { type: String, default: '' },
-  message: { type: String, required: true },
-  status: { type: String, enum: ['new', 'in-progress', 'resolved'], default: 'new' },
-  assignedTechnician: { type: String, default: null },
-  createdAt: { type: Date, default: Date.now }
-});
+  Booking = mongoose.model('Booking', bookingSchema);
+  Inquiry = mongoose.model('Inquiry', inquirySchema);
+  Technician = mongoose.model('Technician', technicianSchema);
+}
 
-const technicianSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  phone: { type: String, default: '' },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['technician', 'admin'], default: 'technician' },
-  specialization: { type: String, default: '' },
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
+// ===== MEMORY DB HELPERS =====
+function memoryFindOne(collection, query) {
+  // Simple query matcher for memory DB
+  return collection.find(item => {
+    for (const [key, value] of Object.entries(query)) {
+      if (key === '$or') {
+        return value.some(cond => Object.entries(cond).every(([k, v]) => item[k] === v));
+      }
+      if (item[key] !== value) return false;
+    }
+    return true;
+  }) || null;
+}
 
-const Booking = mongoose.model('Booking', bookingSchema);
-const Inquiry = mongoose.model('Inquiry', inquirySchema);
-const Technician = mongoose.model('Technician', technicianSchema);
+function memoryFind(collection, query = {}) {
+  return collection.filter(item => {
+    for (const [key, value] of Object.entries(query)) {
+      if (item[key] !== value) return false;
+    }
+    return true;
+  });
+}
+
+function memoryCount(collection, query = {}) {
+  return memoryFind(collection, query).length;
+}
 
 // ===== HELPERS =====
 function generateId(prefix) {
@@ -274,24 +312,33 @@ function roleMiddleware(...allowedRoles) {
 // ===== ROUTES =====
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'KTS API is running', timestamp: new Date().toISOString() });
+  res.json({ 
+    success: true, 
+    message: 'KTS API is running', 
+    timestamp: new Date().toISOString(),
+    mode: useMemoryDb ? 'memory' : 'mongodb'
+  });
 });
 
 // Admin Login
 app.post('/api/auth/admin-login', async (req, res) => {
-  const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  try {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!adminPassword) {
-    return res.status(500).json({ success: false, message: 'Admin password not configured' });
-  }
+    if (!adminPassword) {
+      return res.status(500).json({ success: false, message: 'Admin password not configured' });
+    }
 
-  if (password === adminPassword) {
-    const token = 'kts-admin-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
-    validTokens.set(token, { role: 'admin', userId: 'admin', email: 'admin@konjyosom.com' });
-    res.json({ success: true, token, role: 'admin', message: 'Login successful' });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid password' });
+    if (password === adminPassword) {
+      const token = 'kts-admin-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
+      validTokens.set(token, { role: 'admin', userId: 'admin', email: 'admin@konjyosom.com' });
+      res.json({ success: true, token, role: 'admin', message: 'Login successful' });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid password' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -303,7 +350,13 @@ app.post('/api/auth/technician-login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password required' });
     }
 
-    const technician = await Technician.findOne({ email: email.toLowerCase(), isActive: true });
+    let technician;
+    if (useMemoryDb) {
+      technician = memoryFindOne(memoryTechnicians, { email: email.toLowerCase(), isActive: true });
+    } else {
+      technician = await Technician.findOne({ email: email.toLowerCase(), isActive: true });
+    }
+
     if (!technician) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -347,18 +400,30 @@ app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
       return res.json({ success: true, message: 'Password updated. Please login again.' });
     }
 
-    const technician = await Technician.findOne({ id: req.user.userId });
-    if (!technician) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    let technician;
+    if (useMemoryDb) {
+      technician = memoryFindOne(memoryTechnicians, { id: req.user.userId });
+      if (technician) {
+        if (currentPassword !== technician.password) {
+          return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+        }
+        technician.password = newPassword;
+      }
+    } else {
+      technician = await Technician.findOne({ id: req.user.userId });
+      if (!technician) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      if (currentPassword !== technician.password) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+      if (!newPassword || newPassword.length < 4) {
+        return res.status(400).json({ success: false, message: 'New password must be at least 4 characters' });
+      }
+      technician.password = newPassword;
+      await technician.save();
     }
-    if (currentPassword !== technician.password) {
-      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
-    }
-    if (!newPassword || newPassword.length < 4) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 4 characters' });
-    }
-    technician.password = newPassword;
-    await technician.save();
+
     validTokens.clear();
     res.json({ success: true, message: 'Password updated. Please login again.' });
   } catch (error) {
@@ -375,21 +440,34 @@ app.post('/api/technicians', authMiddleware, roleMiddleware('admin'), async (req
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
     }
 
-    const existing = await Technician.findOne({ email: email.toLowerCase() });
+    let existing;
+    if (useMemoryDb) {
+      existing = memoryFindOne(memoryTechnicians, { email: email.toLowerCase() });
+    } else {
+      existing = await Technician.findOne({ email: email.toLowerCase() });
+    }
+
     if (existing) {
       return res.status(409).json({ success: false, message: 'Technician with this email already exists' });
     }
 
-    const technician = new Technician({
+    const technician = {
       id: generateId('TECH'),
       name,
       email: email.toLowerCase(),
       phone: phone || '',
       password,
       specialization: specialization || '',
-      isActive: true
-    });
-    await technician.save();
+      isActive: true,
+      createdAt: new Date()
+    };
+
+    if (useMemoryDb) {
+      memoryTechnicians.push(technician);
+    } else {
+      const newTech = new Technician(technician);
+      await newTech.save();
+    }
 
     // Send welcome email to technician
     const welcomeEmail = {
@@ -430,7 +508,12 @@ app.post('/api/technicians', authMiddleware, roleMiddleware('admin'), async (req
 
 app.get('/api/technicians', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
-    const technicians = await Technician.find({ isActive: true }).select('-password').sort({ createdAt: -1 });
+    let technicians;
+    if (useMemoryDb) {
+      technicians = memoryTechnicians.filter(t => t.isActive).sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      technicians = await Technician.find({ isActive: true }).select('-password').sort({ createdAt: -1 });
+    }
     res.json({ success: true, data: technicians });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -439,7 +522,12 @@ app.get('/api/technicians', authMiddleware, roleMiddleware('admin'), async (req,
 
 app.get('/api/technicians/all', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
-    const technicians = await Technician.find().select('-password').sort({ createdAt: -1 });
+    let technicians;
+    if (useMemoryDb) {
+      technicians = [...memoryTechnicians].sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      technicians = await Technician.find().select('-password').sort({ createdAt: -1 });
+    }
     res.json({ success: true, data: technicians });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -449,13 +537,25 @@ app.get('/api/technicians/all', authMiddleware, roleMiddleware('admin'), async (
 app.patch('/api/technicians/:id', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
     const { name, phone, specialization, isActive } = req.body;
-    const update = {};
-    if (name !== undefined) update.name = name;
-    if (phone !== undefined) update.phone = phone;
-    if (specialization !== undefined) update.specialization = specialization;
-    if (isActive !== undefined) update.isActive = isActive;
+    let technician;
 
-    const technician = await Technician.findOneAndUpdate({ id: req.params.id }, update, { new: true }).select('-password');
+    if (useMemoryDb) {
+      technician = memoryTechnicians.find(t => t.id === req.params.id);
+      if (technician) {
+        if (name !== undefined) technician.name = name;
+        if (phone !== undefined) technician.phone = phone;
+        if (specialization !== undefined) technician.specialization = specialization;
+        if (isActive !== undefined) technician.isActive = isActive;
+      }
+    } else {
+      const update = {};
+      if (name !== undefined) update.name = name;
+      if (phone !== undefined) update.phone = phone;
+      if (specialization !== undefined) update.specialization = specialization;
+      if (isActive !== undefined) update.isActive = isActive;
+      technician = await Technician.findOneAndUpdate({ id: req.params.id }, update, { new: true }).select('-password');
+    }
+
     if (!technician) return res.status(404).json({ success: false, message: 'Technician not found' });
     res.json({ success: true, data: technician });
   } catch (error) {
@@ -465,7 +565,16 @@ app.patch('/api/technicians/:id', authMiddleware, roleMiddleware('admin'), async
 
 app.delete('/api/technicians/:id', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
-    const technician = await Technician.findOneAndDelete({ id: req.params.id });
+    let technician;
+    if (useMemoryDb) {
+      const idx = memoryTechnicians.findIndex(t => t.id === req.params.id);
+      if (idx !== -1) {
+        technician = memoryTechnicians[idx];
+        memoryTechnicians.splice(idx, 1);
+      }
+    } else {
+      technician = await Technician.findOneAndDelete({ id: req.params.id });
+    }
     if (!technician) return res.status(404).json({ success: false, message: 'Technician not found' });
     res.json({ success: true, message: 'Technician deleted' });
   } catch (error) {
@@ -478,16 +587,25 @@ app.delete('/api/technicians/:id', authMiddleware, roleMiddleware('admin'), asyn
 app.post('/api/bookings', async (req, res) => {
   try {
     const { name, phone, email, address, service, property, preferredDate, date, time, notes, message, reference } = req.body;
-    const booking = new Booking({
+    const booking = {
       id: generateId('BK'),
       reference: reference || generateReference('booking'),
       name, phone, email: email || '', address: address || '',
       service, property: property || '',
       preferredDate: preferredDate || date || '', date: date || preferredDate || '',
       time: time || '', notes: notes || '', message: message || notes || '',
-      status: 'pending'
-    });
-    await booking.save();
+      status: 'pending',
+      assignedTechnician: null,
+      technicianNotes: '',
+      createdAt: new Date()
+    };
+
+    if (useMemoryDb) {
+      memoryBookings.push(booking);
+    } else {
+      const newBooking = new Booking(booking);
+      await newBooking.save();
+    }
 
     // Send confirmation email to client
     if (email) {
@@ -511,7 +629,12 @@ app.post('/api/bookings', async (req, res) => {
 
 app.get('/api/bookings/:id', authMiddleware, async (req, res) => {
   try {
-    const booking = await Booking.findOne({ id: req.params.id });
+    let booking;
+    if (useMemoryDb) {
+      booking = memoryFindOne(memoryBookings, { id: req.params.id });
+    } else {
+      booking = await Booking.findOne({ id: req.params.id });
+    }
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     res.json({ success: true, data: booking });
   } catch (error) {
@@ -524,9 +647,19 @@ app.get('/api/bookings/track', async (req, res) => {
     const { ref, email } = req.query;
     if (!ref) return res.status(400).json({ success: false, message: 'Reference number required' });
     const cleanRef = ref.trim().toUpperCase();
-    let query = { $or: [{ reference: cleanRef }, { id: cleanRef }] };
-    if (email) query.email = email.trim();
-    const booking = await Booking.findOne(query);
+
+    let booking;
+    if (useMemoryDb) {
+      booking = memoryBookings.find(b => 
+        (b.reference === cleanRef || b.id === cleanRef) && 
+        (!email || b.email === email.trim())
+      ) || null;
+    } else {
+      let query = { $or: [{ reference: cleanRef }, { id: cleanRef }] };
+      if (email) query.email = email.trim();
+      booking = await Booking.findOne(query);
+    }
+
     if (booking) return res.json({ success: true, found: true, booking });
     res.json({ success: true, found: false, message: 'Booking not found' });
   } catch (error) {
@@ -540,7 +673,14 @@ app.get('/api/bookings', authMiddleware, async (req, res) => {
     if (req.user.role === 'technician') {
       query = { assignedTechnician: req.user.userId };
     }
-    const bookings = await Booking.find(query).sort({ createdAt: -1 });
+
+    let bookings;
+    if (useMemoryDb) {
+      bookings = memoryFind(memoryBookings, req.user.role === 'technician' ? query : {})
+        .sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      bookings = await Booking.find(query).sort({ createdAt: -1 });
+    }
     res.json({ success: true, data: bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -550,12 +690,23 @@ app.get('/api/bookings', authMiddleware, async (req, res) => {
 app.patch('/api/bookings/:id', authMiddleware, async (req, res) => {
   try {
     const { status, assignedTechnician, technicianNotes } = req.body;
-    const update = {};
-    if (status !== undefined) update.status = status;
-    if (assignedTechnician !== undefined) update.assignedTechnician = assignedTechnician;
-    if (technicianNotes !== undefined) update.technicianNotes = technicianNotes;
+    let booking;
 
-    const booking = await Booking.findOneAndUpdate({ id: req.params.id }, update, { new: true });
+    if (useMemoryDb) {
+      booking = memoryBookings.find(b => b.id === req.params.id);
+      if (booking) {
+        if (status !== undefined) booking.status = status;
+        if (assignedTechnician !== undefined) booking.assignedTechnician = assignedTechnician;
+        if (technicianNotes !== undefined) booking.technicianNotes = technicianNotes;
+      }
+    } else {
+      const update = {};
+      if (status !== undefined) update.status = status;
+      if (assignedTechnician !== undefined) update.assignedTechnician = assignedTechnician;
+      if (technicianNotes !== undefined) update.technicianNotes = technicianNotes;
+      booking = await Booking.findOneAndUpdate({ id: req.params.id }, update, { new: true });
+    }
+
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     res.json({ success: true, data: booking });
   } catch (error) {
@@ -568,14 +719,22 @@ app.patch('/api/bookings/:id', authMiddleware, async (req, res) => {
 app.post('/api/inquiries', async (req, res) => {
   try {
     const { name, email, phone, subject, serviceType, budgetRange, message, reference } = req.body;
-    const inquiry = new Inquiry({
+    const inquiry = {
       id: generateId('INQ'),
       reference: reference || generateReference('enquiry'),
       name, email, phone: phone || '', subject: subject || '',
       serviceType: serviceType || 'General', budgetRange: budgetRange || '',
-      message, status: 'new'
-    });
-    await inquiry.save();
+      message, status: 'new',
+      assignedTechnician: null,
+      createdAt: new Date()
+    };
+
+    if (useMemoryDb) {
+      memoryInquiries.push(inquiry);
+    } else {
+      const newInquiry = new Inquiry(inquiry);
+      await newInquiry.save();
+    }
 
     // Send confirmation email to client
     const emailData = getEnquiryConfirmationEmail(inquiry);
@@ -601,7 +760,14 @@ app.get('/api/inquiries', authMiddleware, async (req, res) => {
     if (req.user.role === 'technician') {
       query = { assignedTechnician: req.user.userId };
     }
-    const inquiries = await Inquiry.find(query).sort({ createdAt: -1 });
+
+    let inquiries;
+    if (useMemoryDb) {
+      inquiries = memoryFind(memoryInquiries, req.user.role === 'technician' ? query : {})
+        .sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      inquiries = await Inquiry.find(query).sort({ createdAt: -1 });
+    }
     res.json({ success: true, data: inquiries });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -610,7 +776,12 @@ app.get('/api/inquiries', authMiddleware, async (req, res) => {
 
 app.get('/api/inquiries/:id', authMiddleware, async (req, res) => {
   try {
-    const inquiry = await Inquiry.findOne({ id: req.params.id });
+    let inquiry;
+    if (useMemoryDb) {
+      inquiry = memoryFindOne(memoryInquiries, { id: req.params.id });
+    } else {
+      inquiry = await Inquiry.findOne({ id: req.params.id });
+    }
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
     res.json({ success: true, data: inquiry });
   } catch (error) {
@@ -623,9 +794,19 @@ app.get('/api/enquiries/track', async (req, res) => {
     const { ref, email } = req.query;
     if (!ref) return res.status(400).json({ success: false, message: 'Reference number required' });
     const cleanRef = ref.trim().toUpperCase();
-    let query = { $or: [{ reference: cleanRef }, { id: cleanRef }] };
-    if (email) query.email = email.trim();
-    const inquiry = await Inquiry.findOne(query);
+
+    let inquiry;
+    if (useMemoryDb) {
+      inquiry = memoryInquiries.find(i => 
+        (i.reference === cleanRef || i.id === cleanRef) && 
+        (!email || i.email === email.trim())
+      ) || null;
+    } else {
+      let query = { $or: [{ reference: cleanRef }, { id: cleanRef }] };
+      if (email) query.email = email.trim();
+      inquiry = await Inquiry.findOne(query);
+    }
+
     if (inquiry) return res.json({ success: true, found: true, enquiry: inquiry });
     res.json({ success: true, found: false, message: 'Enquiry not found' });
   } catch (error) {
@@ -636,11 +817,21 @@ app.get('/api/enquiries/track', async (req, res) => {
 app.patch('/api/inquiries/:id', authMiddleware, async (req, res) => {
   try {
     const { status, assignedTechnician } = req.body;
-    const update = {};
-    if (status !== undefined) update.status = status;
-    if (assignedTechnician !== undefined) update.assignedTechnician = assignedTechnician;
+    let inquiry;
 
-    const inquiry = await Inquiry.findOneAndUpdate({ id: req.params.id }, update, { new: true });
+    if (useMemoryDb) {
+      inquiry = memoryInquiries.find(i => i.id === req.params.id);
+      if (inquiry) {
+        if (status !== undefined) inquiry.status = status;
+        if (assignedTechnician !== undefined) inquiry.assignedTechnician = assignedTechnician;
+      }
+    } else {
+      const update = {};
+      if (status !== undefined) update.status = status;
+      if (assignedTechnician !== undefined) update.assignedTechnician = assignedTechnician;
+      inquiry = await Inquiry.findOneAndUpdate({ id: req.params.id }, update, { new: true });
+    }
+
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
     res.json({ success: true, data: inquiry });
   } catch (error) {
@@ -650,7 +841,16 @@ app.patch('/api/inquiries/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/inquiries/:id', authMiddleware, async (req, res) => {
   try {
-    const inquiry = await Inquiry.findOneAndDelete({ id: req.params.id });
+    let inquiry;
+    if (useMemoryDb) {
+      const idx = memoryInquiries.findIndex(i => i.id === req.params.id);
+      if (idx !== -1) {
+        inquiry = memoryInquiries[idx];
+        memoryInquiries.splice(idx, 1);
+      }
+    } else {
+      inquiry = await Inquiry.findOneAndDelete({ id: req.params.id });
+    }
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
     res.json({ success: true, message: 'Inquiry deleted' });
   } catch (error) {
@@ -670,16 +870,26 @@ app.get('/api/dashboard', authMiddleware, async (req, res) => {
       inquiryQuery = { assignedTechnician: req.user.userId };
     }
 
-    const totalBookings = await Booking.countDocuments(bookingQuery);
-    const totalInquiries = await Inquiry.countDocuments(inquiryQuery);
-    const pendingBookings = await Booking.countDocuments({ ...bookingQuery, status: 'pending' });
-    const newInquiries = await Inquiry.countDocuments({ ...inquiryQuery, status: 'new' });
-    const recentBookings = await Booking.find(bookingQuery).sort({ createdAt: -1 }).limit(5);
-    const recentInquiries = await Inquiry.find(inquiryQuery).sort({ createdAt: -1 }).limit(5);
+    let totalBookings, totalInquiries, pendingBookings, newInquiries, recentBookings, recentInquiries, technicianCount;
 
-    let technicianCount = 0;
-    if (req.user.role === 'admin') {
-      technicianCount = await Technician.countDocuments({ isActive: true });
+    if (useMemoryDb) {
+      const bks = memoryFind(memoryBookings, req.user.role === 'technician' ? bookingQuery : {});
+      const inqs = memoryFind(memoryInquiries, req.user.role === 'technician' ? inquiryQuery : {});
+      totalBookings = bks.length;
+      totalInquiries = inqs.length;
+      pendingBookings = bks.filter(b => b.status === 'pending').length;
+      newInquiries = inqs.filter(i => i.status === 'new').length;
+      recentBookings = bks.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+      recentInquiries = inqs.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+      technicianCount = req.user.role === 'admin' ? memoryTechnicians.filter(t => t.isActive).length : 0;
+    } else {
+      totalBookings = await Booking.countDocuments(bookingQuery);
+      totalInquiries = await Inquiry.countDocuments(inquiryQuery);
+      pendingBookings = await Booking.countDocuments({ ...bookingQuery, status: 'pending' });
+      newInquiries = await Inquiry.countDocuments({ ...inquiryQuery, status: 'new' });
+      recentBookings = await Booking.find(bookingQuery).sort({ createdAt: -1 }).limit(5);
+      recentInquiries = await Inquiry.find(inquiryQuery).sort({ createdAt: -1 }).limit(5);
+      technicianCount = req.user.role === 'admin' ? await Technician.countDocuments({ isActive: true }) : 0;
     }
 
     res.json({ success: true, data: { 
@@ -698,19 +908,25 @@ app.get('/api/me', authMiddleware, async (req, res) => {
     if (req.user.role === 'admin') {
       return res.json({ success: true, user: { role: 'admin', email: req.user.email } });
     }
-    const technician = await Technician.findOne({ id: req.user.userId }).select('-password');
+    let technician;
+    if (useMemoryDb) {
+      technician = memoryTechnicians.find(t => t.id === req.user.userId);
+    } else {
+      technician = await Technician.findOne({ id: req.user.userId }).select('-password');
+    }
     if (!technician) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, user: { ...technician.toObject(), role: technician.role } });
+    res.json({ success: true, user: { ...technician, role: technician.role } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Serve frontend
+// Serve frontend - MUST BE LAST
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 KTS server running on port ${PORT}`);
+  console.log(`📊 Mode: ${useMemoryDb ? 'IN-MEMORY (data will be lost on restart)' : 'MongoDB'}`);
 });
